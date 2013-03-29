@@ -170,7 +170,7 @@ int rip_tiles(ALLEGRO_BITMAP* src)
     int data[TILE_WIDTH][TILE_WIDTH]; //the data in the tiles
     unsigned char r, g, b, a; //holders for the color elements
 
-    tile* hashes = al_malloc(sizeof(tile)*n_tiles);
+    tile* hashes = (tile*)al_malloc(sizeof(tile)*n_tiles);
     memset ((void*)hashes, 0, sizeof(hashes));
 
     //iterate through tiles
@@ -209,6 +209,7 @@ int rip_tiles(ALLEGRO_BITMAP* src)
     }
 
     output_image(src, w, h, hashes, j);
+    al_destroy_bitmap(src);
     al_free(hashes);
     return 0;
 }
@@ -219,16 +220,18 @@ int main()
 
     if(init_alleg())
         return 1;
+    
+    while(1)
+    {
+        src_img = get_image();
 
-    src_img = get_image();
+        if(src_img == NULL)
+            break;
 
-    if(src_img == NULL)
-        return 1;
+        rip_tiles(src_img);
+    }
 
-    rip_tiles(src_img);
-
-    //destroy the bitmaps and shut down
-    al_destroy_bitmap(src_img);
+    //shut down
     al_shutdown_native_dialog_addon();
     return 0;
 }
