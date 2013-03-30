@@ -1,3 +1,15 @@
+//-----------------------------------------------------------------------------
+//             _                       
+//    ___ _ __(_)_ __  _ __   ___ _ __ 
+//   / __| '__| | '_ \| '_ \ / _ \ '__|
+//  | (__| |  | | |_) | |_) |  __/ |   
+//   \___|_|  |_| .__/| .__/ \___|_|   
+//              |_|   |_|              
+// A crappy tile ripper.
+// Copyright (C) 2013 talmina@talmina.org
+// See README.md for license.
+//-----------------------------------------------------------------------------
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <allegro5/allegro5.h>
@@ -5,14 +17,16 @@
 #include <allegro5/allegro_native_dialog.h>
 
 #define TILE_WIDTH 8 //number of pixels w & h a tile is
-#define TILE_SIZE TILE_WIDTH*TILE_WIDTH*sizeof(int) //size of a tile's data in bytes
+#define TILE_SIZE TILE_WIDTH*TILE_WIDTH*sizeof(uint32_t) //size of a tile's data in bytes
+
 //macros for getting the local origins
-#define origin_x(i, w, t) (i*t%w)
-#define origin_y(i, w, t) ((i/(w/t))*t)
+
+#define origin_x(i, w) (i*TILE_WIDTH%w)
+#define origin_y(i, w) ((i/(w/TILE_WIDTH))*TILE_WIDTH)
 
 typedef struct tile {
-    int hash; //hash of tile
-    int index; //index of tile in the original file
+    uint32_t hash[4]; //hash of tile
+    uint32_t index; //index of tile in the original file
 } tile;
 
 //not worth making a header for one big-ass function
@@ -142,9 +156,9 @@ void output_image(ALLEGRO_BITMAP* src, int w, int h, tile* hashes, int n_unique)
     for(i = 0;i < n_unique;i++)
     {
         al_draw_bitmap_region(src,
-            origin_x(hashes[i].index,w,TILE_WIDTH), origin_y(hashes[i].index,w,TILE_WIDTH),
+            origin_x(hashes[i].index,w), origin_y(hashes[i].index,w),
             TILE_WIDTH, TILE_WIDTH,
-            origin_x(i,w,TILE_WIDTH), origin_y(i,w,TILE_WIDTH), 0);
+            origin_x(i,w), origin_y(i,w), 0);
     }
 
     //save bitmap as out.png
@@ -180,7 +194,7 @@ int rip_tiles(ALLEGRO_BITMAP* src)
         for(row = 0;row < TILE_WIDTH;row++)
             for(col = 0;col < TILE_WIDTH;col++)
             {
-                al_unmap_rgba(al_get_pixel(src, origin_x(i,w,TILE_WIDTH) + col, origin_y(i,w,TILE_WIDTH) + row), &r, &g, &b, &a);
+                al_unmap_rgba(al_get_pixel(src, origin_x(i,w) + col, origin_y(i,w) + row), &r, &g, &b, &a);
                 data[row][col] = r | (g << 8) | (b << 16) | (a << 24);
             }
 
@@ -189,7 +203,7 @@ int rip_tiles(ALLEGRO_BITMAP* src)
         //check vs all the other unique ones found so far
         for(k = 0; k < j;k++)
         {
-            if(hashes[k].hash == temp)
+            if(hashes[k].hash[0] == temp)
             {
                 //not unique!
                 unique = 0;
@@ -202,7 +216,7 @@ int rip_tiles(ALLEGRO_BITMAP* src)
         if(unique)
         {
             //add the hash and index
-            hashes[j].hash = temp;
+            hashes[j].hash[0] = temp;
             hashes[j].index = i;
             j++;   //we now have one more unique one
         }
