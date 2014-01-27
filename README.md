@@ -8,7 +8,7 @@ Selects a raster image (BMP or PNG) constructed of 8x8 tiles and tries to find t
 Requirements
 ------------
 
-Allegro 5 + imag addon, GNU Make, and a Linux box.
+Allegro 5.1 + image addon, lookup3 (public domain, included), GNU Make, and a Linux box.
 
 
 License
@@ -28,3 +28,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+lookup3.c
+---------
+Placed in the public domain by Bob Jenkins. See file for additional info and usage.
