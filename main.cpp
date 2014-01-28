@@ -372,8 +372,9 @@ ALLEGRO_BITMAP* consolidate_tiles(tile_stack* t_stack)
 
 void output_bitmap(ALLEGRO_BITMAP* bmp, const char* path)
 {
-    if(!al_save_bitmap(path, bmp))
-        std::cout << "Couldn't save bitmap!" << std::endl;
+    if((al_get_bitmap_height(bmp) & al_get_bitmap_width(bmp)) != 0)
+        if(!al_save_bitmap(path, bmp))
+            std::cout << "Couldn't save bitmap!" << std::endl;
 }
 
 void draw_tile(uint32_t i, tile_data* t_data)
