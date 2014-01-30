@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-c -g -Wall
+CFLAGS=-c -Wall
 LDFLAGS=
 LIBS= $(shell pkg-config allegro_monolith-5 --libs)
 SOURCES=main.cpp lookup3.c

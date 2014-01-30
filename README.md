@@ -3,7 +3,18 @@ cripper
 
 A crappy tile ripper.
 
-Selects a raster image (BMP or PNG) constructed of 8x8 tiles and tries to find the unique ones using horrible linear algorithms.
+Selects a raster image (BMP or PNG) constructed of tiles and tries to find the unique ones using horrible linear algorithms.
+
+Usage
+-----
+
+    cripper
+
+Assumes 8x8 tiles and outputs "output.png"
+
+    cripper [-tw x] [-o y]
+
+Works with tiles x pixels in size. Outputs to file named y. It is best power of two sizes; most games work in 8, 16, or 32 pixel combo sizes.
 
 Requirements
 ------------

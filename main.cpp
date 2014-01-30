@@ -8,22 +8,26 @@ uint8_t magic_r = 255;
 uint8_t magic_g = 0;
 uint8_t magic_b = 255;
 uint8_t tile_width = 8;
-bool use_magic_color = true;
-//char* output_file = "output.png";
+const char* default_output_file = "output.png"; //the default
+char* output_file = NULL; //points to what will be actually used
 
 /*=============================================================================
 Definitions
 =============================================================================*/
 
+//convert bmp width, tile width, and a tile index to the x and y origin
+//of that tile 
 #define ORIGIN_X(i, tw, bw) ((i%(bw/tw))*tw)
 #define ORIGIN_Y(i, tw, bw) ((i/(bw/tw))*tw)
 
+//take tile width, x, and y; return the array index it goes in
+//also allow simulation of H and V flipping
 #define TILE_COORD(x, y, tw) ((y*tw)+x)
 #define TILE_COORD_H(x, y, tw) ((y*tw)+(tw-1)-x)
 #define TILE_COORD_V(x, y, tw) (((tw-1)*tw)+(y*tw*-1)+x)
 #define TILE_COORD_HV(x, y, tw) (((tw-1)*tw)+(y*tw*-1)+(tw-1)-x)
 
-
+//struct to hold tile data and its hashes
 typedef struct{
     uint32_t* data;
     uint32_t hash1;
@@ -31,10 +35,13 @@ typedef struct{
     uint32_t hash3;
     uint32_t hash4;
 } tile_data;
+
+//a container type to hold the tiles, and an iterator
 typedef std::map<uint32_t, tile_data*> tile_stack;
 typedef std::map<uint32_t, tile_data*>::iterator tile_iterator;
 
 //little endian hash function kindly provided by Bob Jenkins in the Public Domain
+uint32_t parse_arguments(int nargs, char* args[]);
 uint32_t hashlittle( const void *key, size_t length, uint32_t initval);
 #define lookup3(key, length) hashlittle(key, length, 0xA11E6705)
 tile_data* get_raw_data(ALLEGRO_BITMAP* bmp, uint32_t tile_number);
@@ -55,6 +62,10 @@ int main(int nargs, char* args[])
     ALLEGRO_FS_ENTRY* file = NULL;
 
     //=========================================================================
+
+    //parse arguments
+    if(parse_arguments(nargs, args))
+        return 1;
 
     //init the stuffs
     al_init();
@@ -113,7 +124,7 @@ int main(int nargs, char* args[])
     std::cout << "We have finished iterating through the bitmaps.\n" << std::endl;
 
     //get rid of the tile
-    output_bitmap(consolidate_tiles(&t_stack), "output.png");
+    output_bitmap(consolidate_tiles(&t_stack), output_file);
 
     //clean up after yourself
     if(dir != NULL)
@@ -125,6 +136,63 @@ int main(int nargs, char* args[])
     {
         al_destroy_fs_entry(file);
     }
+    return 0;
+}
+
+uint32_t parse_arguments(int nargs, char* args[])
+{
+    //go through each of the arguments
+    for(uint32_t i = 1; i < nargs; i++)
+    {
+        //is it a tile width?
+        if((strcmp(args[i], "-tw") == 0))
+        {
+            i++; //working with this value
+
+            if(i >= nargs)
+            {
+                std::cout << "Missing argument for -tw." << std::endl;
+                return 1;
+            }
+
+
+            tile_width = strtol(args[i], NULL, 10);
+
+            //check it
+            if(tile_width == 0)
+            {
+                std::cout << args[i] << " does not work as an argument to -tw." << std::endl;
+                return 1;
+            }
+        }
+        else if((strcmp(args[i], "-o") == 0))
+        {
+            i++; //working with this value
+
+            if(i >= nargs)
+            {
+                std::cout << "Missing argument for -o." << std::endl;
+                return 1;
+            }
+
+            if(strlen(args[i]) < 4)
+            {
+                std::cout << args[i] << " does not work as an argument to -o." << std::endl;
+                return 1;
+            }
+
+            output_file = args[i];
+        }
+    }
+
+    //clean up
+
+    //we need to make sure we have an output file
+    if(output_file == NULL)
+    {
+        output_file = (char*)default_output_file;
+    }
+
     return 0;
 }
 
@@ -347,10 +415,10 @@ ALLEGRO_BITMAP* consolidate_tiles(tile_stack* t_stack)
     if(bmp == NULL)
         return NULL;
     al_set_target_bitmap(bmp);
-    al_clear_to_color(al_map_rgba(magic_r, magic_g, magic_b, 255));
+    al_clear_to_color(al_map_rgba(magic_r, magic_g, magic_b, 0));
 
     //take each tile: draw it to the bmp, delete it's data
-    for(std::map<uint32_t, tile_data*>::iterator it = t_stack->begin();it != t_stack->end(); ++it)
+    for(tile_iterator it = t_stack->begin();it != t_stack->end(); ++it)
     {
         //draw tile to the target bitmap at index i
         draw_tile(i, it->second);
@@ -372,8 +440,10 @@ ALLEGRO_BITMAP* consolidate_tiles(tile_stack* t_stack)
 
 void output_bitmap(ALLEGRO_BITMAP* bmp, const char* path)
 {
-    if((al_get_bitmap_height(bmp) & al_get_bitmap_width(bmp)) != 0)
-        if(!al_save_bitmap(path, bmp))
+    std::cout << "Attempting to output " << path << std::endl;
+
+    if((al_get_bitmap_height(bmp) && al_get_bitmap_width(bmp)) != 0)
+        if(!al_save_bitmap(path, bmp))    //This actually saves; not just an if statement
             std::cout << "Couldn't save bitmap!" << std::endl;
 }
 
