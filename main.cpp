@@ -70,6 +70,7 @@ int main(int nargs, char* args[])
     //init the stuffs
     al_init();
     al_init_image_addon();
+    al_set_new_bitmap_flags(ALLEGRO_NO_PREMULTIPLIED_ALPHA);
 
     //get the directory entry for the current directory
     dir = al_create_fs_entry(".");
@@ -142,7 +143,7 @@ int main(int nargs, char* args[])
 uint32_t parse_arguments(int nargs, char* args[])
 {
     //go through each of the arguments
-    for(uint32_t i = 1; i < nargs; i++)
+    for(int32_t i = 1; i < nargs; i++)
     {
         //is it a tile width?
         if((strcmp(args[i], "-tw") == 0))
@@ -207,7 +208,7 @@ int32_t rip_tiles(ALLEGRO_FS_ENTRY* src, tile_stack* t_stack)
 
 
     //take entry and open BMP in exactly the way the documentation says not to
-    bmp = al_load_bitmap_flags(al_get_fs_entry_name(src), ALLEGRO_NO_PREMULTIPLIED_ALPHA);
+    bmp = al_load_bitmap(al_get_fs_entry_name(src));
 
     //the bitmap wouldn't open
     if(bmp == NULL)
